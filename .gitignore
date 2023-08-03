@@ -1,0 +1,6 @@
+__pycache__
+.vscode
+venv
+backup_lojas
+config.py
+~$
