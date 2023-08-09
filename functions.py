@@ -17,7 +17,7 @@ from selenium.webdriver.common.keys import Keys
 from config import *
 
 
-def send_file_email(
+def send_email(
     file_path: list[str] | list[Path],
     email_addresses: Optional[list[str]] = None,
     subject: Optional[str] = None,
@@ -300,6 +300,8 @@ def list_offers_found(table_products):
     table_offers = pd.DataFrame(table_offers)
     table_offers = table_offers.reset_index(drop=True)
     generate_styled_excel(table_offers)
+
+    return table_offers
 
 
 if __name__ == "__main__":
