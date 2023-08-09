@@ -1,10 +1,7 @@
-import time
-
 import pandas as pd
-from selenium import webdriver
 
-driver = webdriver.Chrome()
+from functions import list_offers_found
 
 # importar/visualizar a base de dados
 table_products = pd.read_excel("data/buscas.xlsx")
-print(table_products)
+list_offers_found(table_products)

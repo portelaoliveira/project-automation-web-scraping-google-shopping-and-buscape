@@ -4,7 +4,10 @@ from email.message import EmailMessage
 from pathlib import Path
 from time import sleep
 from typing import Optional
+from urllib.parse import urlparse, parse_qs
 
+import pandas as pd
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
@@ -143,6 +146,10 @@ def search_google_shopping(
                     )
                     element_father = element_link.find_element(By.XPATH, "..")
                     link = element_father.get_attribute("href")
+                    parsed = urlparse(link)
+                    parsed = parse_qs(parsed.query)
+                    if "url" in parsed:
+                        link = parsed["url"][0]
                     list_offers.append((name, price, link))
             except:
                 continue
@@ -213,14 +220,48 @@ def search_buscape(driver, product, terms_banned, price_min, price_max):
     return list_offers
 
 
-if __name__ == "__main__":
-    from selenium import webdriver
-
+def list_offers_found(table_products):
     driver = webdriver.Chrome()
-    # lista_google_shopping = search_google_shopping(
-    #     driver, "iphone 12 64gb", "mini watch", "3000", "3500"
-    # )
-    # print(lista_google_shopping)
+    table_offers = list()
+
+    for line in table_products.index:
+        product = table_products.loc[line, "Nome"]
+        terms_banned = table_products.loc[line, "Termos banidos"]
+        price_min = table_products.loc[line, "Preço mínimo"]
+        price_max = table_products.loc[line, "Preço máximo"]
+
+        list_offers_google_shopping = search_google_shopping(
+            driver, product, terms_banned, price_min, price_max
+        )
+        for offer in list_offers_google_shopping:
+            table_google_shopping = dict(
+                zip(
+                    ["Produto", "Preço", "Link"],
+                    offer,
+                )
+            )
+            table_offers.append(table_google_shopping)
+
+        list_offers_buscape = search_buscape(
+            driver, product, terms_banned, price_min, price_max
+        )
+        for offer in list_offers_buscape:
+            table_buscape = dict(zip(["Produto", "Preço", "Link"], offer))
+            table_offers.append(table_buscape)
+
+    # exportar pro excel
+    table_offers = pd.DataFrame(table_offers)
+    table_offers = table_offers.reset_index(drop=True)
+    table_offers.to_excel("test/Ofertas.xlsx", index=False)
+
+
+if __name__ == "__main__":
+    driver = webdriver.Chrome()
+
+    lista_google_shopping = search_google_shopping(
+        driver, "iphone 12 64gb", "mini watch", "3000", "3500"
+    )
+    print(lista_google_shopping)
 
     lista_buscape = search_buscape(
         driver, "iphone 12 64gb", "mini watch", "3000", "3500"
