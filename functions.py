@@ -4,9 +4,12 @@ from email.message import EmailMessage
 from pathlib import Path
 from time import sleep
 from typing import Optional
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
+import numpy as np
 import pandas as pd
+from openpyxl.styles import Alignment, Border, Side
+from openpyxl.utils.cell import get_column_letter
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -220,6 +223,50 @@ def search_buscape(driver, product, terms_banned, price_min, price_max):
     return list_offers
 
 
+def generate_styled_excel(table_offers):
+    col_lens = (
+        max(table_offers[c].apply(str).str.len().max() * 1.2, 8)
+        for c in table_offers.columns
+    )
+
+    css_alt_rows = "background-color: powderblue; color: black;"
+    css_indexes = "background-color: steelblue; color: white;"
+
+    with pd.ExcelWriter("test/ofertas.xlsx") as writer:
+        (
+            table_offers.style.apply(
+                lambda col: np.where(col.index % 2, css_alt_rows, None)
+            )  # alternating rows
+            .applymap_index(
+                lambda _: css_indexes, axis=0
+            )  # row indexes (pandas 1.4.0+)
+            .applymap_index(
+                lambda _: css_indexes, axis=1
+            )  # col indexes (pandas 1.4.0+)
+        ).to_excel(writer, sheet_name="list_offers", index=False)
+
+        align = Alignment(
+            horizontal="center", vertical="center", wrapText=True
+        )
+        border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        ws = writer.sheets["list_offers"]
+        for i, col_len in enumerate(col_lens):
+            ws.column_dimensions[get_column_letter(i + 1)].width = col_len
+
+        ws.sheet_view.showGridLines = False
+
+        for row in range(1, len(table_offers) + 2):
+            for col in range(1, len(table_offers.columns) + 1):
+                ws.cell(row, col).alignment = align
+                ws.cell(row, col).border = border
+
+
 def list_offers_found(table_products):
     driver = webdriver.Chrome()
     table_offers = list()
@@ -252,7 +299,7 @@ def list_offers_found(table_products):
     # exportar pro excel
     table_offers = pd.DataFrame(table_offers)
     table_offers = table_offers.reset_index(drop=True)
-    table_offers.to_excel("test/Ofertas.xlsx", index=False)
+    generate_styled_excel(table_offers)
 
 
 if __name__ == "__main__":
