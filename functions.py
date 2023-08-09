@@ -1,6 +1,52 @@
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
+import mimetypes
+import smtplib
+from email.message import EmailMessage
+from pathlib import Path
 from time import sleep
+from typing import Optional
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+from config import *
+
+
+def send_file_email(
+    file_path: list[str] | list[Path],
+    email_addresses: Optional[list[str]] = None,
+    subject: Optional[str] = None,
+    body: Optional[str] = None,
+):
+    list_file_path = file_path
+    message = EmailMessage()
+    message["From"] = USER_MAIL
+    if email_addresses:
+        to = ", ".join(email_addresses)
+    else:
+        to = USER_MAIL
+    message["To"] = to
+    if subject:
+        message["Subject"] = subject
+    if body:
+        message.add_alternative(body, subtype="html")
+    for file_path_ in list_file_path:
+        with open(file_path_, "rb") as f:
+            ctype, encoding = mimetypes.guess_type(file_path_)
+            if ctype is None or encoding is not None:
+                ctype = "application/octet-stream"
+            maintype, subtype = ctype.split("/", 1)
+            message.add_attachment(
+                f.read(),
+                maintype=maintype,
+                subtype=subtype,
+                filename=file_path_.name,
+            )
+    session = smtplib.SMTP("smtp.gmail.com", 587)
+    session.starttls()
+    session.login(USER_MAIL, USER_PASS)
+    # session.send_message(message)
+    session.sendmail(USER_MAIL, to, message.as_string())
+    session.quit()
 
 
 def have_terms_banned_(list_terms_banned, name):
