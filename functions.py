@@ -3,6 +3,35 @@ from selenium.webdriver.common.by import By
 from time import sleep
 
 
+def have_terms_banned_(list_terms_banned, name):
+    have_terms_banned = False
+    for word in list_terms_banned:
+        if word in name:
+            have_terms_banned = True
+
+    return have_terms_banned
+
+
+def have_all_terms_product_(list_terms_products, name):
+    have_all_terms_product = True
+    for word in list_terms_products:
+        if word not in name:
+            have_all_terms_product = False
+
+    return have_all_terms_product
+
+
+def formated_price(price):
+    formated_price = (
+        price.replace("R$", "")
+        .replace(" ", "")
+        .replace(".", "")
+        .replace(",", ".")
+    )
+
+    return formated_price
+
+
 def search_google_shopping(
     driver, product, terms_banned, price_min, price_max
 ):
@@ -47,28 +76,19 @@ def search_google_shopping(
         name = name.lower()
 
         # verificacao do nome - se no nome tem algum termo banido
-        have_terms_banned = False
-        for word in list_terms_banned:
-            if word in name:
-                have_terms_banned = True
+        have_terms_banned = have_terms_banned_(list_terms_banned, name)
 
         # verificar se no nome tem todos os termos do nome do produto
-        have_all_terms_product = True
-        for word in list_terms_products:
-            if word not in name:
-                have_all_terms_product = False
+        have_all_terms_product = have_all_terms_product_(
+            list_terms_products, name
+        )
 
         if (
             not have_terms_banned and have_all_terms_product
         ):  # verificando o nome
             try:
                 price = results.find_element(By.CLASS_NAME, "a8Pemb").text
-                price = (
-                    price.replace("R$", "")
-                    .replace(" ", "")
-                    .replace(".", "")
-                    .replace(",", ".")
-                )
+                price = formated_price(price)
                 price = float(price)
                 # verificando se o preco ta dentro do minimo e maximo
                 if price_min <= price <= price_max:
@@ -98,7 +118,6 @@ def search_buscape(driver, product, terms_banned, price_min, price_max):
     # entrar no buscape
     driver.get("https://www.buscape.com.br/")
     driver.maximize_window()
-    # sleep(1000000)
 
     # pesquisar pelo produto no buscape
     driver.find_element(
@@ -109,43 +128,42 @@ def search_buscape(driver, product, terms_banned, price_min, price_max):
 
     # pegar a lista de resultados da busca do buscape
     sleep(5)
-    list_results = driver.find_elements(By.CLASS_NAME, "Cell_Content__1630r")
+    list_results = driver.find_elements(
+        By.CLASS_NAME, "SearchCard_ProductCard_Inner__7JhKb"
+    )
+    sleep(5)
 
     # para cada resultado
     list_offers = []
     for results in list_results:
         try:
             price = results.find_element(
-                By.CLASS_NAME, "CellPrice_MainValue__3s0iP"
+                By.CLASS_NAME, "Text_MobileHeadingS__Zxam2"
             ).text
-            name = results.get_attribute("title")
+            name = results.find_element(
+                By.CLASS_NAME, "SearchCard_ProductCard_Name__ZaO5o"
+            ).text
             name = name.lower()
             link = results.get_attribute("href")
 
             # verificacao do nome - se no nome tem algum termo banido
-            have_terms_banned = False
-            for word in list_terms_banned:
-                if word in name:
-                    have_terms_banned = True
+            have_terms_banned = have_terms_banned_(list_terms_banned, name)
 
             # verificar se no nome tem todos os termos do nome do produto
-            have_all_terms_product = True
-            for word in list_terms_products:
-                if word not in name:
-                    have_all_terms_product = False
+            have_all_terms_product = have_all_terms_product_(
+                list_terms_products, name
+            )
 
             if not have_terms_banned and have_all_terms_product:
-                price = (
-                    price.replace("R$", "")
-                    .replace(" ", "")
-                    .replace(".", "")
-                    .replace(",", ".")
-                )
+                price = formated_price(price)
                 price = float(price)
                 if price_min <= price <= price_max:
                     list_offers.append((name, price, link))
         except:
             pass
+
+    sleep(10)
+
     return list_offers
 
 
