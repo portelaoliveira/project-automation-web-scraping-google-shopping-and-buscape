@@ -1,7 +1,7 @@
-from selenium import webdriver
+import time
 
 import pandas as pd
-import time
+from selenium import webdriver
 
 driver = webdriver.Chrome()
 
