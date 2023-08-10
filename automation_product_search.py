@@ -14,8 +14,8 @@ table_offers = list_offers_found(table_products)
 
 # verificando se existe alguma oferta dentro da tabela de ofertas
 if not table_offers.empty:
-    name = "Haroldo"
-    to = ["haroldo.santos@ruraltech.com.br"]
+    name = "Erick"
+    to = ["erick.marques@ruraltech.com.br"]
     subject = "Produto(s) Encontrado(s) na faixa de preço desejada"
     body = f"""
     <!DOCTYPE html>
