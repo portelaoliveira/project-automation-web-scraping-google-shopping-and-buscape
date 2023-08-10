@@ -22,7 +22,7 @@ def send_email(
     email_addresses: Optional[list[str]] = None,
     subject: Optional[str] = None,
     body: Optional[str] = None,
-):
+) -> None:
     list_file_path = file_path
     message = EmailMessage()
     message["From"] = USER_MAIL
@@ -50,12 +50,11 @@ def send_email(
     session = smtplib.SMTP("smtp.gmail.com", 587)
     session.starttls()
     session.login(USER_MAIL, USER_PASS)
-    # session.send_message(message)
     session.sendmail(USER_MAIL, to, message.as_string())
     session.quit()
 
 
-def have_terms_banned_(list_terms_banned, name):
+def have_terms_banned_(list_terms_banned: list[str], name: str) -> bool:
     have_terms_banned = False
     for word in list_terms_banned:
         if word in name:
@@ -64,7 +63,7 @@ def have_terms_banned_(list_terms_banned, name):
     return have_terms_banned
 
 
-def have_all_terms_product_(list_terms_products, name):
+def have_all_terms_product_(list_terms_products: list[str], name: str) -> bool:
     have_all_terms_product = True
     for word in list_terms_products:
         if word not in name:
@@ -73,7 +72,7 @@ def have_all_terms_product_(list_terms_products, name):
     return have_all_terms_product
 
 
-def formated_price(price):
+def formated_price(price: str) -> str:
     formated_price = (
         price.replace("R$", "")
         .replace(" ", "")
@@ -85,8 +84,12 @@ def formated_price(price):
 
 
 def search_google_shopping(
-    driver, product, terms_banned, price_min, price_max
-):
+    driver: object,
+    product: str,
+    terms_banned: str,
+    price_min: str,
+    price_max: str,
+) -> list[str]:
     # entrar no google
     driver.get("https://www.google.com/")
     driver.maximize_window()
@@ -162,7 +165,13 @@ def search_google_shopping(
     return list_offers
 
 
-def search_buscape(driver, product, terms_banned, price_min, price_max):
+def search_buscape(
+    driver: object,
+    product: str,
+    terms_banned: str,
+    price_min: str,
+    price_max: str,
+) -> list[str]:
     # tratar os valores da função
     price_max = float(price_max)
     price_min = float(price_min)
@@ -223,7 +232,7 @@ def search_buscape(driver, product, terms_banned, price_min, price_max):
     return list_offers
 
 
-def generate_styled_excel(table_offers):
+def generate_styled_excel(table_offers: pd.DataFrame) -> None:
     col_lens = (
         max(table_offers[c].apply(str).str.len().max() * 1.2, 8)
         for c in table_offers.columns
@@ -267,7 +276,7 @@ def generate_styled_excel(table_offers):
                 ws.cell(row, col).border = border
 
 
-def list_offers_found(table_products):
+def list_offers_found(table_products: pd.DataFrame):
     driver = webdriver.Chrome()
     table_offers = list()
 
